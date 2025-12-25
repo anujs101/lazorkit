@@ -1,15 +1,35 @@
 'use client';
 
 import { useState } from 'react';
+import { useWallet } from '@lazorkit/wallet';
+
+type UIState = 'default' | 'processing' | 'success';
 
 export default function CheckoutPage() {
-  const [state, setState] = useState<'default' | 'processing' | 'success'>('default');
+  const [state, setState] = useState<UIState>('default');
 
-  const handlePayment = () => {
-    setState('processing');
-    setTimeout(() => {
+  const {
+    connect,
+    isConnected,
+    smartWalletPubkey,
+  } = useWallet();
+
+  const handlePayment = async () => {
+    try {
+      setState('processing');
+
+      if (!isConnected) {
+        await connect();
+      }
+
+      // At this stage, success just means wallet is connected
+      console.log('Smart wallet:', smartWalletPubkey?.toBase58());
+
       setState('success');
-    }, 2000);
+    } catch (err) {
+      console.error(err);
+      setState('default');
+    }
   };
 
   return (
@@ -44,13 +64,13 @@ export default function CheckoutPage() {
 
             {state === 'processing' && (
               <div className="w-full bg-neutral-800 text-neutral-400 py-3 px-4 rounded text-sm font-medium text-center">
-                Processing payment...
+                Connecting with passkey…
               </div>
             )}
 
             {state === 'success' && (
               <div className="w-full bg-neutral-800 text-neutral-50 py-3 px-4 rounded text-sm font-medium text-center">
-                Payment successful
+                Wallet connected successfully
               </div>
             )}
           </div>
