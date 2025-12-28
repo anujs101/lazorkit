@@ -1,36 +1,58 @@
 'use client';
 
+import './polyfills';
 import { useState } from 'react';
 import { useWallet } from '@lazorkit/wallet';
-
+import { SystemProgram, PublicKey } from '@solana/web3.js';
 type UIState = 'default' | 'processing' | 'success';
 
 export default function CheckoutPage() {
   const [state, setState] = useState<UIState>('default');
 
   const {
-    connect,
-    isConnected,
-    smartWalletPubkey,
-  } = useWallet();
+  connect,
+  isConnected,
+  smartWalletPubkey,
+  signAndSendTransaction,
+} = useWallet();
 
   const handlePayment = async () => {
-    try {
-      setState('processing');
+  try {
+    setState('processing');
 
-      if (!isConnected) {
-        await connect();
-      }
-
-      // At this stage, success just means wallet is connected
-      console.log('Smart wallet:', smartWalletPubkey?.toBase58());
-
-      setState('success');
-    } catch (err) {
-      console.error(err);
-      setState('default');
+    // 1. Ensure passkey + wallet
+    if (!isConnected) {
+      await connect();
     }
-  };
+
+    if (!smartWalletPubkey) {
+      throw new Error('Smart wallet not available');
+    }
+
+    // 2. Recipient (your provided pubkey)
+    const recipient = new PublicKey(
+      'nqiPhEae4JmmvSJHR3pK6wJmakgbnsf7eipq8gFCfcg'
+    );
+
+    // 3. Build SOL transfer instruction
+    const instruction = SystemProgram.transfer({
+      fromPubkey: smartWalletPubkey,
+      toPubkey: recipient,
+      lamports: 100, // minimal amount for demo
+    });
+
+    // 4. Send gasless transaction via Lazorkit
+    await signAndSendTransaction({
+      instructions: [instruction],
+    });
+
+    setState('success');
+  } catch (err) {
+    console.log('hello');
+    //console.error(err);
+    setState('default');
+  }
+};
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">

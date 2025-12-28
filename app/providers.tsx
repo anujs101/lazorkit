@@ -17,7 +17,7 @@ export default function Providers({
   children: React.ReactNode;
 }) {
   return (
-    <LazorkitProvider
+    <LazorkitProvider 
       rpcUrl={CONFIG.RPC_URL}
       portalUrl={CONFIG.PORTAL_URL}
       paymasterConfig={CONFIG.PAYMASTER}
